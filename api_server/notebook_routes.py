@@ -2,7 +2,7 @@
 from notebooks import Notebook
 from flask_restplus import Resource, Namespace, fields
 from datetime import datetime
-from app import api
+from api_server.app import api
 
 ns = Namespace('Notebooks', title='Notebooks api')
 api.add_namespace(ns, '/api/notebooks')

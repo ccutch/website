@@ -2,7 +2,7 @@
 from google.cloud import datastore
 from datetime import datetime
 from dateutil.parser import parse
-from db_helper import db_client
+from notebooks.db_helper import db_client
 
 
 class Entry(object):
