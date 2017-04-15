@@ -13,6 +13,7 @@ import (
 )
 
 var (
+	uuidRegex     = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 	postListRoute = Route{
 		Path:        "/posts",
 		Description: "REST handler for listing and creating posts",
@@ -23,7 +24,7 @@ var (
 	}
 
 	postRoute = Route{
-		Path:        "/posts/{postID:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}}",
+		Path:        "/posts/{postID:" + uuidRegex + "}",
 		Description: "REST handler getting, updating, and deleting posts",
 		Actions: map[string]http.HandlerFunc{
 			"GET": getPost,
