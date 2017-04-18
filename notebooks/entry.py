@@ -33,11 +33,13 @@ class Entry(object):
             **e), query.fetch())
 
     @staticmethod
-    def get_by_id(entry_id):
-        key = db_client.key('Entry', entry_id)
-        return Entry(
-            key=key,
-            **db_client.get(key))
+    def get_by_id(entry_id, notebook_id):
+        key = db_client.key('Notebook', notebook_id, 'Entry', entry_id)
+        e = db_client.get(key)
+        if not e:
+            return None
+        e['notebook_id'] = notebook_id
+        return Entry(key=key, **e)
 
     @property
     def id(self):
