@@ -2,10 +2,12 @@
 from notebooks import Notebook, Entry
 from flask_restplus import Resource, Namespace, fields
 from datetime import datetime
-from api_server.app import api
+
+
+def register(api):
+    api.add_namespace(ns, '/api/notebooks')
 
 ns = Namespace('Notebooks', title='Notebooks api')
-api.add_namespace(ns, '/api/notebooks')
 
 
 notebook_model = ns.model('Notebook', {
@@ -26,7 +28,8 @@ entry_model = ns.model('Entry', {
     'abstract': fields.String(required=True),
     'body': fields.String(required=True),
     'references': fields.List(fields.String(), default=[]),
-    'created': fields.DateTime(readOnly=True, default=datetime.now)
+    'created': fields.DateTime(readOnly=True, default=datetime.now),
+    'revised_id': fields.String(readOnly=True)
 })
 
 entry_list_model = ns.model('EntryList', {
@@ -43,6 +46,7 @@ class NotebookListAPI(Resource):
     @ns.doc('list_notebooks')
     @ns.marshal_list_with(notebook_list_model)
     def get(self):
+        print 'Getting notebooks'
         notebooks = Notebook.get_list()
         # NOTE: Check if there is a nicer way to do this with flask restplus
         return map(lambda n: {'id': n.id, 'notebook': n}, notebooks)
@@ -91,8 +95,9 @@ class NotebookEntryListAPI(Resource):
 
     @ns.doc('create_entry')
     @ns.marshal_with(entry_model)
-    def post(self, entry):
+    def post(self, notebook_id):
         data = ns.marshal(api.payload, entry_model)
+        data['notebook_id'] = notebook_id
         entry = Entry(**data)
         return entry.save()
 
@@ -114,6 +119,7 @@ class NotebookEntryAPI(Resource):
     @ns.marshal_with(entry_model)
     def put(self, notebook_id, entry_id):
         data = ns.marshal(api.payload, entry_model)
+        data['notebook_id'] = notebook_id
         entry = Entry.get_by_id(entry_id, notebook_id)
-        entry, old_entry = entry.revise(**data)
-        return entry.save()
+        entry, old_entry = entry.revise(data)
+        return entry
