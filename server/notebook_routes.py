@@ -46,7 +46,6 @@ class NotebookListAPI(Resource):
     @ns.doc('list_notebooks')
     @ns.marshal_list_with(notebook_list_model)
     def get(self):
-        print 'Getting notebooks'
         notebooks = Notebook.get_list()
         # NOTE: Check if there is a nicer way to do this with flask restplus
         return map(lambda n: {'id': n.id, 'notebook': n}, notebooks)

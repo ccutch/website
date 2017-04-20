@@ -1,6 +1,6 @@
 
 
-from api_server.app import app
+from server.app import app
 
 __author__ = 'Connor McCutcheon'
 __version__ = '1.0.0'

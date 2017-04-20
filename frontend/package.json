@@ -1,0 +1,10 @@
+{
+  "name": "ccutch frontend",
+  "version": "1.0",
+  "scripts": {
+    "start": "echo \"this is a test\""
+  },
+  "dependencies": {
+    "systemjs": "^0.20.12"
+  }
+}
