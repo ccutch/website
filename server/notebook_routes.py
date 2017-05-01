@@ -1,4 +1,5 @@
 
+from flask import request
 from notebooks import Notebook, Entry
 from flask_restplus import Resource, Namespace, fields
 from datetime import datetime
@@ -54,7 +55,7 @@ class NotebookListAPI(Resource):
     @ns.expect(notebook_model)
     @ns.marshal_with(notebook_model)
     def post(self):
-        data = ns.marshal(api.payload, notebook_model)
+        data = ns.marshal(request.get_json(), notebook_model)
         notebook = Notebook(**data)
         return notebook.save()
 

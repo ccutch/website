@@ -2,15 +2,21 @@
 from google.cloud import datastore
 from datetime import datetime
 from dateutil.parser import parse
-from notebooks.db_helper import db_client
+from notebooks.db_helper import DatabaseEntity
 
 
-class Entry(object):
+class Entry(DatabaseEntity):
+
+    excluded_fields = ['abstract', 'body']
+    fields = [
+        'title', 'abstract', 'created',
+        'body', 'references', 'revised_id'
+    ]
 
     def __init__(self, notebook_id, title, abstract, body, created,
                  references=[], revised_id=None, key=None):
-        self.key = key
-        self.notebook_key = db_client.key('Notebook', notebook_id)
+        super(Entry, self).__init__(key=key)
+        self.parent_key = db_client.key('Notebook', notebook_id)
         self.title = title
         self.abstract = abstract
         self.body = body
@@ -54,23 +60,6 @@ class Entry(object):
     def notebook_id(self):
         """ Short cut to getting key property id of parent notebook """
         return self.notebook_key.id
-
-    def save(self):
-        if not self.key:
-            self.key = db_client.key('Entry', parent=self.notebook_key)
-
-        entity = datastore.Entity(key=self.key)
-        entity.update({
-            'title': self.title,
-            'abstract': self.abstract,
-            'created': self.created,
-            'body': self.body,
-            'references': self.references,
-            'revised_id': self.revised_id
-        })
-
-        db_client.put(entity)
-        return self
 
     def revise(self, new_data):
         key = self.key
