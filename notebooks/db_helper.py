@@ -9,11 +9,11 @@ class DatabaseEntity(object):
 
     fields = None
     excluded_fields = []
+    client = datastore.Client(project=PROJECT_ID)
 
     def __init__(self, key):
         self.key = key
         self.parent_key = None
-        self.client = datastore.Client(project=PROJECT_ID)
 
     @property
     def id(self):
@@ -28,11 +28,11 @@ class DatabaseEntity(object):
         fields = [cls.__name__, id]
         for k, v in kwargs.iteritems():
             fields.append(k, v)
-        return cls(key=key, **self.client.get(key))
+        return cls(key=key, **cls.client.get(key))
 
     @classmethod
     def get_list(cls):
-        query = self.client.query(kind=cls.__name__)
+        query = cls.client.query(kind=cls.__name__)
         return map(lambda e: cls(key=e.key, **e), query.fetch())
 
     def save(self):

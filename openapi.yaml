@@ -1,0 +1,89 @@
+definitions:
+  Notebook:
+    properties:
+      created:
+        format: date-time
+        type: string
+      description:
+        type: string
+      title:
+        type: string
+    required:
+    - created
+    - description
+    - title
+    type: object
+  NotebookList:
+    properties:
+      id:
+        format: int32
+        type: integer
+      notebook:
+        $ref: '#/definitions/Notebook'
+    type: object
+info:
+  title: Swagger spec for google endpoints
+  version: 1.0.0
+parameters:
+  notebook_id:
+    in: path
+    name: notebook_id
+    type: string
+paths:
+  /api/notebooks/:
+    get:
+      description: Gets list of notebooks
+      responses:
+        '200':
+          description: List of notebooks is returned
+          schema:
+            $ref: '#/definitions/NotebookList'
+    post:
+      consumes:
+      - application/json
+      description: Creates a notebook
+      parameters:
+      - in: body
+        name: notebook_data
+        schema:
+          $ref: '#/definitions/Notebook'
+      responses:
+        '200':
+          description: Newly created notebook
+          schema:
+            $ref: '#/definitions/Notebook'
+  /api/notebooks/{notebook_id}:
+    get:
+      description: Get notebook by id
+      parameters:
+      - in: path
+        name: notebook_id
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Notebook from database
+          schema:
+            $ref: '#/definitions/Notebook'
+        '404':
+          description: Error message
+    put:
+      consumes:
+      - application/json
+      description: update notebook
+      parameters:
+      - in: path
+        name: notebook_id
+        required: true
+        type: string
+      - in: body
+        name: notebook_data
+        schema:
+          $ref: '#/definitions/Notebook'
+      responses:
+        '200':
+          description: Newly created notebook
+          schema:
+            $ref: '#/definitions/Notebook'
+swagger: '2.0'
+tags: []

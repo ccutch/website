@@ -1,125 +1,111 @@
 
-from flask import request
-from notebooks import Notebook, Entry
-from flask_restplus import Resource, Namespace, fields
-from datetime import datetime
+from flask import Blueprint, request, jsonify
+from marshmallow import fields, Schema
+from notebooks.notebook import Notebook
 
 
-def register(api):
-    api.add_namespace(ns, '/api/notebooks')
-
-ns = Namespace('Notebooks', title='Notebooks api')
+# routes = Blueprint('notebook_api', __name__)
+routes = Blueprint(__name__, 'notebook_api')
 
 
-notebook_model = ns.model('Notebook', {
-    'title': fields.String(required=True, description='Title of the notebook'),
-    'description': fields.String(required=True),
-    'created': fields.DateTime(readOnly=True, default=datetime.now)
-})
-
-notebook_list_model = ns.model('NotebookList', {
-    'id': fields.Integer(readOnly=True,
-                         description='Id of datastore key for notebook'),
-    'notebook': fields.Nested(notebook_model)
-})
-
-entry_model = ns.model('Entry', {
-    'title': fields.String(required=True, description='Title of the entry'),
-    'notebook_id': fields.Integer(required=True),
-    'abstract': fields.String(required=True),
-    'body': fields.String(required=True),
-    'references': fields.List(fields.String(), default=[]),
-    'created': fields.DateTime(readOnly=True, default=datetime.now),
-    'revised_id': fields.String(readOnly=True)
-})
-
-entry_list_model = ns.model('EntryList', {
-    'id': fields.Integer(readOnly=True,
-                         description='Id of datastore key for entry'),
-    'entry': fields.Nested(entry_model)
-})
+class NotebookSchema(Schema):
+    title = fields.Str(required=True)
+    description = fields.Str(required=True)
+    created = fields.DateTime(required=True)
 
 
-@ns.route('/')
-@ns.doc()
-class NotebookListAPI(Resource):
-
-    @ns.doc('list_notebooks')
-    @ns.marshal_list_with(notebook_list_model)
-    def get(self):
-        notebooks = Notebook.get_list()
-        # NOTE: Check if there is a nicer way to do this with flask restplus
-        return map(lambda n: {'id': n.id, 'notebook': n}, notebooks)
-
-    @ns.doc('create_notebooks')
-    @ns.expect(notebook_model)
-    @ns.marshal_with(notebook_model)
-    def post(self):
-        data = ns.marshal(request.get_json(), notebook_model)
-        notebook = Notebook(**data)
-        return notebook.save()
+class NotebookList(Schema):
+    id = fields.Integer()
+    notebook = fields.Nested(NotebookSchema)
 
 
-@ns.route('/<int:notebook_id>')
-@ns.param('notebook_id')
-@ns.doc()
-class NotebookAPI(Resource):
-
-    @ns.doc('get_notebook')
-    @ns.marshal_with(notebook_model)
-    def get(self, notebook_id):
-        notebook = Notebook.get_by_id(notebook_id)
-        return notebook
-
-    @ns.doc('update_notebook')
-    # @ns.expect(notebook_model)
-    @ns.marshal_with(notebook_model)
-    def put(self, notebook_id):
-        data = ns.marshal(api.payload, notebook_model)
-        data.pop('created')
-        notebook = Notebook.get_by_id(notebook_id)
-        notebook.update(data)
-        return notebook.save()
+def _json_response(schema, data):
+    res = schema.dump(data)
+    return jsonify(res.data)
 
 
-@ns.route('/<int:notebook_id>/entries')
-@ns.param('notebook_id')
-@ns.doc()
-class NotebookEntryListAPI(Resource):
-
-    @ns.doc('get_entries')
-    @ns.marshal_with(entry_list_model)
-    def get(self, notebook_id):
-        entries = Entry.get_for_noteboook(notebook_id)
-        return map(lambda e: {'id': e.id, 'entry': e}, entries)
-
-    @ns.doc('create_entry')
-    @ns.marshal_with(entry_model)
-    def post(self, notebook_id):
-        data = ns.marshal(api.payload, entry_model)
-        data['notebook_id'] = notebook_id
-        entry = Entry(**data)
-        return entry.save()
+@routes.route('/', methods=['GET'])
+def list_notebooks():
+    """ Gets a list of notebooks
+    ---
+    get:
+        description: Gets list of notebooks
+        responses:
+            200:
+                description: List of notebooks is returned
+                schema:
+                    $ref: '#/definitions/NotebookList'
+    """
+    notebooks = Notebook.get_list()
+    return _json_response(
+        NotebookList(many=True),
+        [{'id': n.id, 'notebook': n} for n in notebooks])
 
 
-@ns.route('/<int:notebook_id>/entries/<int:entry_id>')
-@ns.param('notebook_id')
-@ns.param('entry_id')
-@ns.doc()
-class NotebookEntryAPI(Resource):
+@routes.route('/', methods=['POST'])
+def create_notebook():
+    """ Creates a notebook
+    ---
+    post:
+        description: Creates a notebook
+        consumes:
+        - application/json
+        parameters:
+        - name: notebook_data
+          in: body
+          schema:
+            $ref: '#/definitions/Notebook'
+        responses:
+            200:
+                description: Newly created notebook
+                schema:
+                    $ref: '#/definitions/Notebook'
+    """
+    data, errors = notebook_schema.load(request.get_json())
+    if errors:
+        return jsonify(errors), 400
+    notebook = Notebook(**data)
+    notebook.save()
+    return _json_response(NotebookSchema(), notebook)
 
-    @ns.doc('get_entry')
-    @ns.marshal_with(entry_model)
-    def get(self, notebook_id, entry_id):
-        print(notebook_id, entry_id)
-        entry = Entry.get_by_id(entry_id, notebook_id)
-        return entry
 
-    @ns.doc('revise_entry')
-    @ns.marshal_with(entry_model)
-    def put(self, notebook_id, entry_id):
-        data = ns.marshal(api.payload, entry_model)
-        data['notebook_id'] = notebook_id
-        entry = Entry.get_by_id(entry_id, notebook_id)
-        entry, old_entry = entry.revise(data)
-        return entry
+@routes.route('/<int:notebook_id>', methods=['GET', 'PUT'])
+def get_update_notebook(notebook_id):
+    """ Get and, if updates are given, update notebook
+    ---
+    get:
+        description: Get notebook by id
+        parameters:
+        - in: path
+          name: notebook_id
+          type: string
+        responses:
+            200:
+                description: Notebook from database
+                schema:
+                    $ref: '#/definitions/Notebook'
+            404:
+                description: Error message
+
+    put:
+        description: update notebook
+        consumes:
+        - application/json
+        parameters:
+        - in: path
+          name: notebook_id
+          type: string
+        - name: notebook_data
+          in: body
+          schema:
+            $ref: '#/definitions/Notebook'
+        responses:
+            200:
+                description: Newly created notebook
+                schema:
+                    $ref: '#/definitions/Notebook'
+    """
+    notebook = Notebook.get_by_id(notebook_id)
+    if request.method == 'PUT':
+        pass
+    return _json_response(NotebookSchema(), notebook)

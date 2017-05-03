@@ -23,12 +23,10 @@ class Entry(DatabaseEntity):
         self.references = references
         self.revised_id = revised_id
 
-        if type(created) == datetime:
-            self.created = created
-        elif type(created) == str:
+        if type(created) == str:
             self.created = parse(created)
         else:
-            self.created = None
+            self.created = created
 
     @staticmethod
     def get_for_noteboook(notebook_id):
