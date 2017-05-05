@@ -1,10 +1,11 @@
 {
-  "name": "ccutch frontend",
+  "name": "ccutch.frontend",
   "version": "1.0",
   "scripts": {
     "start": "echo \"this is a test\""
   },
   "dependencies": {
+    "normalize.css": "^7.0.0",
     "systemjs": "^0.20.12"
   }
 }
