@@ -11,6 +11,7 @@ root_dir = path.abspath(path.dirname(path.dirname(__file__)))
 frontend_dir = path.join(root_dir, 'frontend')
 
 app = Flask(__name__)
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
 
 app.register_blueprint(notebook_routes.routes, url_prefix='/api/notebooks')
 app.register_blueprint(frontend_routes.routes)
@@ -22,7 +23,7 @@ def handle_error(error):
 
 
 @app.route('/swagger.json')
-def server_swagger():
+def serve_swagger():
     load_spec()
     return jsonify(spec.to_dict())
 

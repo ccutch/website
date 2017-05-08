@@ -3,3 +3,5 @@ gunicorn
 google-cloud
 marshmallow
 apispec
+python-dateutil
+gensim

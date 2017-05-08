@@ -70,7 +70,7 @@ class DatastoreClient(object):
                 self.ENTRY_KIND, parent=entry.notebook_key)
 
         self._put_entity(entry.key, {
-            'notebook_id': entry.notebook_key.id,
+            'notebook_id': entry.notebook_id,
             'title': entry.title,
             'abstract': entry.abstract,
             'body': entry.body,

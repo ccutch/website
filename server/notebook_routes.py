@@ -70,12 +70,42 @@ def create_notebook():
 
 @routes.route('/<int:notebook_id>', methods=['GET'])
 def get_notebook(notebook_id):
+    """ Get notebook
+    ---
+    get:
+        description: Get notebook by id
+        parameters:
+        - name: notebook_id
+          in: path
+          type: integer
+          required: true
+        responses:
+            200:
+                description: Looks up notebook in database by id
+                schema:
+                    $ref: '#/definitions/Notebook'
+    """
     notebook = notebook_client.GetNotebook(notebook_id)
     return _json_response(NotebookSchema(), notebook)
 
 
 @routes.route('/<int:notebook_id>', methods=['PUT'])
 def update_notebook(notebook_id):
+    """
+    ---
+    put:
+        description: Update notebook with new notebook data
+        parameters:
+        - name: notebook_id
+          in: path
+          type: integer
+          required: true
+        responses:
+            200:
+                description: Updated notebook data
+                schema:
+                    $ref: '#/definitions/Notebook'
+    """
     data, errs = NotebookSchema().load(request.get_json())
     if errs:
         return jsonify(errs), 400

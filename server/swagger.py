@@ -1,5 +1,7 @@
 
+from __future__ import print_function
 from flask import current_app
+from pprint import pprint
 from apispec import APISpec, Path, utils
 from apispec.ext.flask import flaskpath2swagger
 from notebook_routes import NotebookSchema, NotebookList, routes
@@ -7,7 +9,7 @@ from notebook_routes import NotebookSchema, NotebookList, routes
 
 spec = APISpec(
     title='Swagger spec for google endpoints',
-    version='1.0.0',
+    version='1.0.1',
     plugins=[
         'apispec.ext.flask',
         'apispec.ext.marshmallow'
@@ -18,7 +20,8 @@ spec = APISpec(
 def load_spec():
     spec.definition('Notebook', schema=NotebookSchema)
     spec.definition('NotebookList', schema=NotebookList)
-    add_paths_for_blueprint(spec, routes)
+    # spec.add_path(view=notebook_routes.list_notebooks)
+    add_paths_for_blueprint(spec, routes, exclude=('serve_swagger',))
 
 
 # Blueprint helpers below
@@ -35,10 +38,14 @@ spec.register_path_helper(path_from_rule)
 
 def add_paths_for_blueprint(spec, blueprint, exclude=()):
     bp_name = blueprint.name
+    for r in current_app.url_map._rules:
+        pprint(r.endpoint)
+        endpoint = r.endpoint.split('.')
+
     for r in current_app.url_map.iter_rules():
         ep = r.endpoint.split('.')
         if len(ep) == 1:  # App endpoint, not processed here
-            break
+            continue
         elif len(ep) >= 2:  # Blueprint endpoint
             i = len(ep) - 1
             prefix, endpoint = ep[i-1], ep[i]
