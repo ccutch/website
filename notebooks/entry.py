@@ -1,26 +1,23 @@
 
 from google.cloud import datastore
-from datetime import datetime
-from dateutil.parser import parse
-from notebooks.db_helper import DatabaseEntity
+from notebooks._helpers import Entity, _ensure_date
 
 
-class Entry(DatabaseEntity):
+class Entry(Entity):
 
     def __init__(self, notebook_id, title, abstract, body, created,
                  references=[], revised_id=None, key=None):
-        super(Entry, self).__init__(key=key)
         self.notebook_key = db_client.key('Notebook', notebook_id)
         self.title = title
         self.abstract = abstract
         self.body = body
         self.references = references
         self.revised_id = revised_id
+        self.created = _ensure_date(created)
 
-        if type(created) == str:
-            self.created = parse(created)
-        else:
-            self.created = created
+    @property
+    def notebook_id(self):
+        return self.notebook_key.id
 
     def revise(self, new_data):
         key = self.key

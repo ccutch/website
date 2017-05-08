@@ -1,32 +1,30 @@
 
 from google.cloud import datastore
-from datetime import datetime
-from dateutil.parser import parse
-from notebooks.db_helper import DatabaseEntity
 from notebooks.entry import Entry
+from notebooks._helpers import Entity, _ensure_date
 
 
-class Notebook(DatabaseEntity):
+class Notebook(Entity):
+    """ Notebook object
+
+    :type title: str
+    :param title: Title of notebook
+
+    :type description: str
+    :param description: description of notebook
+
+    :type created: datetime
+    :param created: timestamp when notebook was created
+
+    :type key: class`google.cloud.datastore.Key`
+    :param key: datastore key object. Created on save if None
     """
-    """
-    excluded_fields = ['description']
-    fields = [
-        'title',
-        'created',
-        'description'
-    ]
 
-    def __init__(self, title, description, created=None, key=None):
-        super(Notebook, self).__init__(key=key)
+    def __init__(self, title, description, created, key=None):
+        self.key = key
         self.title = title
         self.description = description
-
-        if type(created) == datetime:
-            self.created = created
-        elif type(created) == str:
-            self.created = parse(created)
-        else:
-            self.created = None
+        self.created = _ensure_date(created)
 
     @property
     def entries(self):

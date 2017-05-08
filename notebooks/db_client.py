@@ -22,9 +22,10 @@ class DatastoreClient(object):
         """ Creates entity and saves to datastore under given key with the given
         fields. All fields are queriable unless in excluded list.
         """
+
         entity = datastore.Entity(
             key=key,
-            exclude_from_indexes=exclude
+            exclude_from_indexes=excluded
         )
         entity.update(fields)
         self.client.put(entity)

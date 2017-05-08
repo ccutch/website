@@ -1,17 +1,17 @@
 
 from flask import Blueprint, request, jsonify
+from datetime import datetime
 from marshmallow import fields, Schema
-from notebooks.db_client import DatastoreClient
+from notebooks import Notebook, notebook_client
 
 
-db = DatastoreClient()
 routes = Blueprint(__name__, 'notebook_api')
 
 
 class NotebookSchema(Schema):
     title = fields.Str(required=True)
     description = fields.Str(required=True)
-    created = fields.DateTime(required=True)
+    created = fields.DateTime(readOnly=True)
 
 
 class NotebookList(Schema):
@@ -39,10 +39,55 @@ def list_notebooks():
                     $ref: '#/definitions/NotebookList'
     """
     # notebooks = Notebook.get_list()
-    notebooks = db.ListNotebooks()
+    notebooks = notebook_client.ListNotebooks()
     return _json_response(
         NotebookList(many=True),
         [{'id': n.id, 'notebook': n} for n in notebooks])
+
+
+@routes.route('/', methods=['POST'])
+def create_notebook():
+    """ Create a new notebook.
+    ---
+    post:
+        description: Create a new notebook
+        responses:
+            200:
+                description: Newly created notebook
+                schema:
+                    $ref: '#/definitions/Notebook'
+    """
+    data, errs = NotebookSchema().load(request.get_json())
+    if errs:
+        return jsonify(errs), 400
+
+    if not data.get('created'):
+        data['created'] = datetime.now()
+    notebook = Notebook(**data)
+    notebook_client.SaveNotebook(notebook)
+    return _json_response(NotebookSchema(), notebook)
+
+
+@routes.route('/<int:notebook_id>', methods=['GET'])
+def get_notebook(notebook_id):
+    notebook = notebook_client.GetNotebook(notebook_id)
+    return _json_response(NotebookSchema(), notebook)
+
+
+@routes.route('/<int:notebook_id>', methods=['PUT'])
+def update_notebook(notebook_id):
+    data, errs = NotebookSchema().load(request.get_json())
+    if errs:
+        return jsonify(errs), 400
+
+    notebook = notebook_client.GetNotebook(notebook_id)
+    if not notebook:
+        return jsonify({'error': 'Notebook not found'}), 404
+
+    notebook = Notebook(
+        key=notebook.key, created=notebook.created, **data)
+    notebook_client.SaveNotebook(notebook)
+    return _json_response(NotebookSchema(), notebook)
 
 
 # @routes.route('/', methods=['POST'])

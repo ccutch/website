@@ -2,7 +2,7 @@ import sys
 import json
 import yaml
 from os import path
-from flask import Flask, Blueprint, send_from_directory
+from flask import Flask, Blueprint, send_from_directory, jsonify
 from server import notebook_routes, frontend_routes
 from swagger import spec, load_spec
 
@@ -19,6 +19,12 @@ app.register_blueprint(frontend_routes.routes)
 @app.errorhandler(404)
 def handle_error(error):
     return send_from_directory(frontend_dir, 'index.html')
+
+
+@app.route('/swagger.json')
+def server_swagger():
+    load_spec()
+    return jsonify(spec.to_dict())
 
 
 if __name__ == '__main__':
