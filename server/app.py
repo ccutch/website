@@ -1,10 +1,11 @@
-import sys
-import json
-import yaml
 from os import path
 from flask import Flask, Blueprint, send_from_directory, jsonify
 from server import notebook_routes, frontend_routes
 from swagger import spec, load_spec
+
+import sys
+import json
+import yaml
 
 
 root_dir = path.abspath(path.dirname(path.dirname(__file__)))

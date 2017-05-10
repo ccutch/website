@@ -48,8 +48,10 @@ def add_paths_for_blueprint(spec, blueprint, exclude=()):
             continue
         elif len(ep) >= 2:  # Blueprint endpoint
             i = len(ep) - 1
-            prefix, endpoint = ep[i-1], ep[i]
-            if prefix == bp_name and endpoint not in exclude:
+            endpoint = ep[i]
+            bp = '.'.join(ep[:i])
+            print(bp)
+            if bp == bp_name and endpoint not in exclude:
                 spec.add_path(rule=r)
         else:
             raise ValueError("Not valid endpoint?", r.endpoint)
